@@ -110,6 +110,25 @@ class Asps:
     
     
     
+    def delete_crew_csv(self, file):
+        with open(file) as csv_file:
+            csv_reader= csv.reader(csv_file, delimiter=';')
+            line_count = 0
+            crews = []
+            for row in csv_reader:
+                if row[0] == None:
+                    break
+                if line_count == 0:
+                    line_count += 1
+                else:
+                    crews.append(row[0])
+                    line_count += 1
+            crews = list(set(crews))
+            for crew in crews:
+                self.delete_for_crew(crew)
+
+
+
     def delete_for_crew(self, crew):
         with self.connection.cursor() as cursor:
             sql = ('select p.email, s.full_name, c.name, sc.role, sc.pillar '
@@ -154,7 +173,7 @@ class Asps:
                     'set sc.pillar = %s, sc.role = "VolunteerManager" '
                     + where
                 )
-            cursor.execute(sql, pillar)
+            cursor.execute(sql, pillar.lstrip())
         self.connection.commit()
 
     def delete(self, email):

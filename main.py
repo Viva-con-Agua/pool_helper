@@ -75,14 +75,17 @@ def main(argv):
                 # output error, and return with an error code
                 print (str(err))
             if csv != None:
+                asps.delete_crew_csv(csv)
                 asps.set_list(csv)
                 exit(0)
             asps.set(email, crew, pillar)
+
         elif func == "delete":
-            options = "he:c:"
-            long = ["help", "email", "crew"]
+            options = "he:c:l:"
+            long = ["help", "email=", "crew=", "list="]
             crew  = None 
             email = None
+            csv = None
             try:
                 a, _ = getopt.getopt(argv[3:], options, long)
                 for ca, cv in a:
@@ -92,14 +95,19 @@ def main(argv):
                         email = cv
                     elif ca in ("-c", "--crew"):
                         crew = cv
+                    elif ca in ("-l", "--list"):
+                        csv = cv
             except getopt.error as err:
                 # output error, and return with an error code
                 print (str(err))
+            if csv != None:
+                asps.delete_crew_csv(csv)
+                exit(0)
             if email != None and crew != None:
                 print("-e takes no effect in with -c")
             elif crew != None: 
                 asps.delete_for_crew(crew)
-                exit(0)
+                exit(0) 
             elif email != None:
                 asps.delete(email)
                 exit(0)
