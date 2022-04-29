@@ -1,4 +1,4 @@
-import pymysql, pymysql.cursors, os, uuid, copy, csv
+import pymysql, pymysql.cursors, os, uuid, copy, csv, requests
 
 from dotenv import load_dotenv
 
@@ -7,6 +7,7 @@ crewModel = {
     'id': '',
     'email': '',
     'name': '',
+    'cities': []
 }
 
 class Crews:
@@ -46,27 +47,17 @@ class Crews:
     def migrate(self, file):
         crew_list = self.convert_csv(file)
         crew_list = self.get_uuid(crew_list)
+        url = os.getenv('POOL3_URL')
+        if url == None:
+            url = "http://pool-api.localhost"
+        token = os.getenv('POOL3_KEY')
+        if token == None:
+            token = "secret"
+        headers = {"Content-Type": "application/json" ,"Authorization": "Bearer " + token}
         for entry in crew_list:
-            print(entry)
-#        sql = ('select * from Crew')
-#        with self.connection.cursor() as cursor:
-#            cursor.execute(sql)
-#            result = cursor.fetchall()
-#        for entry in result:
-#            print(uuid.UUID(bytes=entry['publicId']))
-#            with self.pool1.cursor() as cursor:
-#                sql = ('select * from wp_users where user_login = %s')
-#                cursor.execute(sql, entry["name"])
-#                wp_user = cursor.fetchone()
-#                email = ''
-#                if wp_user != None:
-#                    email = wp_user['user_email']
-#                crew = copy.deepcopy(crewModel)
-#                crew['id'] = str(uuid.UUID(bytes=entry['publicId']))
-#                crew['name'] = entry["name"]
-#                crew['email'] = email
-#                print(crew)
-
+            response = requests.post(url + '/crews/migrate', headers=headers, json=entry)
+            print(response.text)
+        
     def get_uuid(self, crew_list):
         sql = ('select * from Crew where name = %s')
         for entry in crew_list:

@@ -2,6 +2,7 @@
 import sys
 from src.asps import Asps
 from src.crews import Crews
+from src.user import User
 def help_asp():
     print("Commands for asp: all, get")
     print("  all")
@@ -18,6 +19,9 @@ def main(argv):
         prog.process(argv)
     elif argv[1] == "crews":
         prog = Crews()
+        prog.process(argv)
+    elif argv[1] == "users":
+        prog = User()
         prog.process(argv)
 if __name__ == "__main__":
     main(sys.argv)
