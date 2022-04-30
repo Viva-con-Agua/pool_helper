@@ -11,7 +11,6 @@ crewModel = {
 }
 
 class Crews:
-    
     def __init__(self) -> None:
         load_dotenv()
         password=os.getenv('DROPS_PASSWORD')
