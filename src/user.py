@@ -1,4 +1,3 @@
-from sys import argv
 import pymysql, pymysql.cursors, os, copy, uuid
 from dotenv import load_dotenv
 import requests
@@ -29,8 +28,9 @@ userModel = {
         'number': '',
         'zip': '',
         'city': '',
-        'country': 'country',
+        'country': '',
         'country_code': '',
+        'additionals': ''
     },
     'profile': {
         'birthdate': 0,
@@ -68,15 +68,15 @@ class User:
                 )
     
     def getUsers(self):
-        sql = ( 'select u.public_id, p.email, s.first_name, s.last_name, sc.active, sc.nvm_date, c.publicId, u.created, u.updated, sc.pillar, s.birthday, s.mobile_phone, s.sex, '
-                'sc.updated as crew_updated, sc.created as crew_created, a.country, a.street, a.zip, a.city '
+        sql = ( 'select u.public_id, p.email, s.first_name, s.last_name, sc.active, sc.nvm_date, c.publicId as crew_publicId, u.created, u.updated, sc.pillar, s.birthday, s.mobile_phone, s.sex, '
+                'sc.updated as crew_updated, sc.created as crew_created, a.country, a.street, a.zip, a.city, a.additional '
                 'from User as u ' 
                 'left join Profile as p on u.id = p.user_id ' 
                 'left join Supporter as s on s.profile_id = p.id '
                 'left join Address as a on a.supporter_id = s.id '
                 'left join Supporter_Crew as sc on sc.supporter_id = s.id '
                 'left join Crew as c on sc.crew_id = c.id '
-                'limit 200'
+                'where p.email = "laura.stolte@t-online.de"'
                 )
         with self.connection.cursor() as cursor:
             cursor.execute(sql)
@@ -85,33 +85,16 @@ class User:
         for i in tqdm (range (len(database_result)), desc="Convert User...", ncols=75):
             x = database_result[i]
             if x['email'] in result_dict.keys():
-                if x['active'] != None:
-                    result_dict[x['email']]["active"] = x['active']
-                if x['nvm_date'] !=None:
-                    result_dict[x['email']]['nvm_date'] = x['nvm_date']
-                if x['pillar'] != None:
-                    result_dict[x['email']]['roles'].append(x['pillar'])
+                result_dict[x['email']] = self.update_user(result_dict[x['email']], x)
             else:
-                user = copy.deepcopy(userModel)
-                user['email'] = x['email']
-                user['drops_id'] = str(uuid.UUID(bytes=x['public_id']))
-                user['first_name'] = x['first_name']
-                user['last_name'] = x['last_name']
-                user['full_name'] = x['first_name'] + ' ' + x['last_name']
+                user = self.create_user(x)
                 #profile
                 user['profile'] = self.create_profile(x)  
+                #address
                 user['address'] = self.addressSearch(x)
-                if x['publicId'] != None:
-                    user['crew']['id'] = str(uuid.UUID(bytes=x['publicId']))
-                    user['crew']['modified']['created'] = x['crew_created'] 
-                    user['crew']['modified']['updated'] = x['crew_updated']
-               # user['crew_id'] = str(uuid.UUID(bytes=x['publicId']))
-                if x['active'] != None:
-                    user['active'] = x['active']
-                if x['nvm_date'] !=None:
-                    user['nvm_date'] = x['nvm_date']
-                if x['pillar'] != None:
-                    user['roles'].append(x['pillar'])
+                
+                if x['crew_publicId'] != None:
+                    user['crew'] = self.create_crew(x)
                 result_dict[x['email']] = user
 
         result = []
@@ -119,49 +102,53 @@ class User:
             result.append(result_dict[x])
         return result
     
+    def create_user(self, db_entry):
+        user = copy.deepcopy(userModel)
+        user['email'] = db_entry['email']
+        user['drops_id'] = str(uuid.UUID(bytes=db_entry['public_id']))
+        user['first_name'] = db_entry['first_name']
+        user['last_name'] = db_entry['last_name']
+        user['full_name'] = db_entry['first_name'] + ' ' + db_entry['last_name']
+        user['modified']["created"] = int(db_entry['created'] /1000)
+        user['modified']['updated'] = int(db_entry['updated'] /1000)
+        if db_entry['active'] != None:
+            user['active'] = db_entry['active']
+        if db_entry['nvm_date'] !=None:
+            user['nvm_date'] = int(db_entry['nvm_date'] / 1000)
+        if db_entry['pillar'] != None:
+            user['roles'].append(db_entry['pillar'])
+
+        return user
+    
+    def update_user(self, user, db_entry):
+        if db_entry['active'] != None:
+            user['active'] = db_entry['active']
+        if db_entry['nvm_date'] !=None:
+            user['nvm_date'] = int(db_entry['nvm_date'] / 1000)
+        if db_entry['pillar'] != None:
+            user['roles'].append(db_entry['pillar'])
+        return user
 
 
+    # creates profile from db_entry
     def create_profile(self, db_entry):
         profile = {
-            'birthdate': db_entry['birthday'],
+            'birthdate': int(db_entry['birthday']/1000),
             'phone': db_entry['mobile_phone'],
             'gender': db_entry['sex'],
         }
         return profile
-
-    def clean_country(self, country):
-        if country == None:
-            return ''
-        elif 'deuts' in country.lower() or 'german' in country.lower() or 'nieder' in country.lower():
-            return 'Deutschland'
-        elif 'öster' in country.lower() or 'aust' in country.lower():
-            return 'Österreich'
-        elif 'schweiz' in country.lower() or 'switz' in country.lower():
-            return 'Schweiz'
-        elif 'denmark' in country.lower() or 'dänemark' in country.lower():
-            return 'Dänemark'
-        elif 'spain' in country.lower():
-            return 'Spanien'
-        elif 'south' in country.lower():
-            return 'Südafrika'
-        else:
-            return country
-
-    def country_code(self, country): 
-        if country == None:
-            return ''
-        elif country == 'Deutschland':
-            return 'DE'
-        elif country == 'Österreich':
-            return 'AT'
-        elif country == 'Schweiz':
-            return 'CH'
-        elif country == 'Dänemark':
-            return 'DK'
-        elif country == 'Spanien':
-            return 'ES'
-        elif country == 'Südafrika':
-            return 'ZA'
+    
+    # creates crew form db_entry
+    def create_crew(self, db_entry): 
+        crew = { 
+            'id': str(uuid.UUID(bytes=db_entry['crew_publicId'])),
+            'modified': {
+                'updated': int(db_entry['crew_created']/1000),
+                'created': int(db_entry['crew_updated']/1000)
+            },
+        }
+        return crew
 
     def addressSearch(self, db_entry): 
         address = {
@@ -171,6 +158,7 @@ class User:
             'city': '',
             'country': '',
             'country_code': '',
+            'additionals': ''
         },
         # enter your api key here
         #api_key = 'AIzaSyAX6zQOta_rs-AZYJWGPZ4YSTNMPeVQ8q0'
@@ -216,31 +204,47 @@ class User:
             elif 'locality' in entry['types']:
                 address[0]['city'] = entry['long_name']       
             #print(entry)
+        address[0]['additionals'] = db_entry['additional']
         #print(place_id)
         return address[0]
 
     def postUsers(self, u_list):
-        headers = {'Content-Type': 'application/json'}
+        count = {
+            'success': 0,
+            'failed': 0,
+            'error': []
+        }
+        token = os.getenv('POOL3_KEY')
+        if token == None:
+            token = "secret"
+        headers = {'Content-Type': 'application/json', "Authorization": "Bearer " + token}
         url = os.getenv('POOL3_ADMIN_URL')
         if url == None:
-            url = "http://localhost:1340"
+            url = "http://pool-api.localhost"
 
         for i in tqdm (range (len(u_list)), desc="Import User...", ncols=75):
-            response = requests.post(url + '/admin/users', headers=headers, json=u_list[i])
+            response = requests.post(url + '/migrations/user', headers=headers, json=u_list[i])
             if response.status_code != 201:
-                print(response)
-        print("Import User successfully completed.")
+                count['failed'] = count['failed'] +1
+                count['error'].append(response.text)
+            else:
+                count['success'] = count['success'] + 1
+        return count
 
     def migrate(self):
         user = self.getUsers()
-        #self.addressSearch('Meerweibchenstraße 3')
-        for x in user:
-            if x['address'] != None:
+        #for x in user:
+        #    if x['address'] != None:
+        #        print(x)
+        result = self.postUsers(user)
+        print("Import User completed.")
+        if len(result["error"]) != 0:
+            print('Errors: ')
+            for x in result['error']:
                 print(x)
-        #self.postUsers(user)
-       
-
-
+        print("Success: ", result['success'])
+        print("Failed: ", result['failed'])
+    
     def process(self, argv):
         if len(argv) < 2:
             print("no param")
