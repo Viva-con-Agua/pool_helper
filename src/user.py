@@ -76,7 +76,6 @@ class User:
                 'left join Address as a on a.supporter_id = s.id '
                 'left join Supporter_Crew as sc on sc.supporter_id = s.id '
                 'left join Crew as c on sc.crew_id = c.id '
-                'where p.email = "laura.stolte@t-online.de"'
                 )
         with self.connection.cursor() as cursor:
             cursor.execute(sql)
@@ -133,10 +132,12 @@ class User:
     # creates profile from db_entry
     def create_profile(self, db_entry):
         profile = {
-            'birthdate': int(db_entry['birthday']/1000),
+            'birthdate': 0,
             'phone': db_entry['mobile_phone'],
             'gender': db_entry['sex'],
         }
+        if db_entry['birthday'] != None:
+            profile['birthdate'] = int(db_entry['birthday']/1000)
         return profile
     
     # creates crew form db_entry
