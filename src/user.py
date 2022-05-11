@@ -246,8 +246,17 @@ class User:
         print("Success: ", result['success'])
         print("Failed: ", result['failed'])
     
+    def confirm(self, email):
+        sql = "update Profile set confirmed = 1 where email = %s"
+        with self.connection.cursor() as cursor:
+            cursor.execute(sql, email)
+        self.connection.commit()
+
+    
     def process(self, argv):
         if len(argv) < 2:
             print("no param")
         if argv[2] == "migrate":
             self.migrate()
+        if argv[2] == "confirm":
+            self.confirm(argv[3])
