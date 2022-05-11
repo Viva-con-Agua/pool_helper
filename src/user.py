@@ -268,5 +268,6 @@ class User:
             self.migrate()
         if argv[2] == "confirm":
             self.confirm(argv[3])
+            self.get(argv[3])
         if argv[2] == "get":
             self.get(argv[3])
