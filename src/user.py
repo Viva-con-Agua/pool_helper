@@ -252,6 +252,14 @@ class User:
             cursor.execute(sql, email)
         self.connection.commit()
 
+    def get(self, email):
+        sql = "select * from Profile where email = %s"
+        with self.connection.cursor() as cursor:
+            cursor.execute(sql, email)
+            database_result = cursor.fetchone()
+            print(database_result)
+
+
     
     def process(self, argv):
         if len(argv) < 2:
@@ -260,3 +268,5 @@ class User:
             self.migrate()
         if argv[2] == "confirm":
             self.confirm(argv[3])
+        if argv[2] == "get":
+            self.get(argv[3])
