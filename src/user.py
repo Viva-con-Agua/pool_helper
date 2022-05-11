@@ -219,7 +219,7 @@ class User:
         if token == None:
             token = "secret"
         headers = {'Content-Type': 'application/json', "Authorization": "Bearer " + token}
-        url = os.getenv('POOL3_ADMIN_URL')
+        url = os.getenv('POOL3_URL')
         if url == None:
             url = "http://pool-api.localhost"
 
