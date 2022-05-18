@@ -1,5 +1,6 @@
 # Helper scripts for pool 1/2 processes
 import sys
+from src.event_stats import EventStats
 from src.asps import Asps
 from src.crews import Crews
 from src.user import User
@@ -22,6 +23,9 @@ def main(argv):
         prog.process(argv)
     elif argv[1] == "users":
         prog = User()
+        prog.process(argv)
+    elif argv[1] == "event":
+        prog = EventStats()
         prog.process(argv)
 if __name__ == "__main__":
     main(sys.argv)
