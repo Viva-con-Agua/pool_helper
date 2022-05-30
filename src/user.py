@@ -66,6 +66,18 @@ class User:
                 database="drops",
                 cursorclass=pymysql.cursors.DictCursor
                 )
+        password=os.getenv('POOL1_PASSWORD')
+        if password == None:
+            print("set pool1 pw")
+            exit(1)
+        self.pool1 = pymysql.connect(
+                host=os.getenv('POOL1_HOST'),
+                port=port,
+                user=os.getenv('POOL1_USER'),
+                password=password,
+                database="db175370026",
+                cursorclass=pymysql.cursors.DictCursor
+                )
     
     def getUsers(self):
         sql = ( 'select u.public_id, p.email, s.first_name, s.last_name, sc.active, sc.nvm_date, c.publicId as crew_publicId, u.created, u.updated, sc.pillar, s.birthday, s.mobile_phone, s.sex, '
@@ -253,11 +265,52 @@ class User:
         self.connection.commit()
 
     def get(self, email):
-        sql = "select * from Profile where email = %s"
+        sql = "select * from User as u left join Profile as p on p.user_id = u.id where email = %s"
         with self.connection.cursor() as cursor:
             cursor.execute(sql, email)
             database_result = cursor.fetchone()
             print(database_result)
+    
+    def delete(self, email):
+        sql = "select p.id as p_id, u.id as u_id, s.id as s_id from User as u left join Profile as p on p.user_id = u.id left join Supporter as s on s.profile_id = p.id where email = %s"
+        u_id = 0
+        with self.connection.cursor() as cursor:
+            cursor.execute(sql, email)
+            database_result = cursor.fetchone()
+            u_id = database_result["u_id"]
+            p_id = database_result["p_id"]
+            s_id = database_result["s_id"]
+        login_del = "delete from LoginInfo where profile_id = " + str(p_id)
+        password_del = "delete from PasswordInfo where profile_id = " + str(p_id)
+        address_del = "delete from Address where supporter_id = " + str(s_id)
+        supporter_del = "delete from Supporter where profile_id = " + str(p_id)
+        supporter_crew_del = "delete from Supporter_Crew where supporter_id = " + str(s_id)
+        profile_del = " delete from Profile where user_id = " + str(u_id)
+        oauth_del = "delete o from OauthToken as o left join User as u on u.public_id = o.user_id where u.id = " + str(u_id)
+        user_del = " delete from User where id = " + str(u_id)
+
+        with self.connection.cursor() as cursor:
+            cursor.execute(login_del)
+            cursor.execute(password_del)
+            cursor.execute(supporter_crew_del)
+            cursor.execute(address_del)
+            cursor.execute(supporter_del)
+            cursor.execute(profile_del)
+            cursor.execute(oauth_del)
+            cursor.execute(user_del)
+        self.connection.commit()
+        
+        del_p1_user = "select * from wp_users where user_email = %s"
+        with self.pool1.cursor() as cursor:
+            cursor.execute(del_p1_user, email)
+            database_result = cursor.fetchone()
+            u_id = database_result["ID"]
+        user_del = "delete from wp_users where id = " + str(u_id)
+        with self.pool1.cursor() as cursor:
+            cursor.execute(user_del)
+        self.pool1.commit()
+        
+        
 
 
     
@@ -271,3 +324,7 @@ class User:
             self.get(argv[3])
         if argv[2] == "get":
             self.get(argv[3])
+        if argv[2] == "delete":
+            self.delete(argv[3])
+
+
