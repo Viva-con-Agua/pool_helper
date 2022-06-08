@@ -1,7 +1,9 @@
 import pymysql, pymysql.cursors, os, copy, uuid
 from dotenv import load_dotenv
 import requests
-from tqdm import tqdm 
+from tqdm import tqdm
+
+from .utils import Utils 
 
 userModel = {
 #    'id': '',
@@ -47,37 +49,11 @@ userModel = {
 class User:
 
     def __init__(self) -> None:
+        self.utils = Utils()
         load_dotenv()
         self.api_key = os.getenv('GOOGLE_API_KEY')
-        password=os.getenv('DROPS_PASSWORD')
-        port_string= os.getenv("DROPS_PORT")
-        if port_string != None:
-            port = int(port_string)
-        else:
-            port = 3306
-        if password == None:
-            print("set")
-            exit(1)
-        self.connection = pymysql.connect(
-                host=os.getenv('DROPS_HOST'),
-                port=port,
-                user=os.getenv('DROPS_USER'),
-                password=password,
-                database="drops",
-                cursorclass=pymysql.cursors.DictCursor
-                )
-        password=os.getenv('POOL1_PASSWORD')
-        if password == None:
-            print("set pool1 pw")
-            exit(1)
-        self.pool1 = pymysql.connect(
-                host=os.getenv('POOL1_HOST'),
-                port=port,
-                user=os.getenv('POOL1_USER'),
-                password=password,
-                database="db175370026",
-                cursorclass=pymysql.cursors.DictCursor
-                )
+        self.drops = self.utils.connect_drops()
+        self.pool1 = self.utils.connect_pool1()
     
     def getUsers(self):
         sql = ( 'select u.public_id, p.email, s.first_name, s.last_name, sc.active, sc.nvm_date, c.publicId as crew_publicId, u.created, u.updated, sc.pillar, s.birthday, s.mobile_phone, s.sex, '
@@ -89,7 +65,7 @@ class User:
                 'left join Supporter_Crew as sc on sc.supporter_id = s.id '
                 'left join Crew as c on sc.crew_id = c.id '
                 )
-        with self.connection.cursor() as cursor:
+        with self.drops.cursor() as cursor:
             cursor.execute(sql)
             database_result = cursor.fetchall()
             result_dict = {}
@@ -260,13 +236,13 @@ class User:
     
     def confirm(self, email):
         sql = "update Profile set confirmed = 1 where email = %s"
-        with self.connection.cursor() as cursor:
+        with self.drops.cursor() as cursor:
             cursor.execute(sql, email)
-        self.connection.commit()
+        self.drops.commit()
 
     def get(self, email):
         sql = "select * from User as u left join Profile as p on p.user_id = u.id where email = %s"
-        with self.connection.cursor() as cursor:
+        with self.drops.cursor() as cursor:
             cursor.execute(sql, email)
             database_result = cursor.fetchone()
             print(database_result)
@@ -274,7 +250,7 @@ class User:
     def delete(self, email):
         sql = "select p.id as p_id, u.id as u_id, s.id as s_id from User as u left join Profile as p on p.user_id = u.id left join Supporter as s on s.profile_id = p.id where email = %s"
         u_id = 0
-        with self.connection.cursor() as cursor:
+        with self.drops.cursor() as cursor:
             cursor.execute(sql, email)
             database_result = cursor.fetchone()
             u_id = database_result["u_id"]
@@ -289,7 +265,7 @@ class User:
         oauth_del = "delete o from OauthToken as o left join User as u on u.public_id = o.user_id where u.id = " + str(u_id)
         user_del = " delete from User where id = " + str(u_id)
 
-        with self.connection.cursor() as cursor:
+        with self.drops.cursor() as cursor:
             cursor.execute(login_del)
             cursor.execute(password_del)
             cursor.execute(supporter_crew_del)
@@ -298,7 +274,7 @@ class User:
             cursor.execute(profile_del)
             cursor.execute(oauth_del)
             cursor.execute(user_del)
-        self.connection.commit()
+        self.drops.commit()
         
         del_p1_user = "select * from wp_users where user_email = %s"
         with self.pool1.cursor() as cursor:
