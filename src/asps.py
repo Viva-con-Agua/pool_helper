@@ -96,6 +96,16 @@ class Asps:
             print(result)
     
 
+    def get_crews(self, crew=None) -> List:
+        where = ""
+        if crew != None:
+            where = 'where name = ' + '"'+ crew + '"'
+        with self.drops.cursor() as cursor:
+            sql = ('select name from Crew ' + where)
+            cursor.execute(sql)
+            result = cursor.fetchall()
+        return result
+
 
     def set(self, email, crew, pillar):
         presentDate = datetime.datetime.now()
@@ -177,14 +187,15 @@ class Asps:
                 'where c.name = %s && sc.role = "VolunteerManager"' )
             cursor.execute(sql, crew)
             result = cursor.fetchall()
-        exportCrew = ExportASPCrew(crew_id=str(UUID(bytes=result[0]["crew_id"])), users=[])
-        for i in result:
-            user = ExportASP(uuid=str(UUID(bytes=i["public_id"])), role=i["pillar"])
-            exportCrew.users.append(user)
-            
-        print(exportCrew.dict())
-        response = self.utils.idjango_post('/v1/pool/asps/', exportCrew.dict())
-        print(response.text)
+        if result:
+            exportCrew = ExportASPCrew(crew_id=str(UUID(bytes=result[0]["crew_id"])), users=[])
+            for i in result:
+                user = ExportASP(uuid=str(UUID(bytes=i["public_id"])), role=i["pillar"])
+                exportCrew.users.append(user)
+            response = self.utils.idjango_post('/v1/pool/asps/', exportCrew.dict())
+            print(response.text)
+        else:
+            print(crew + " not found!")
         
        
 
@@ -198,8 +209,24 @@ class Asps:
                     self.set(e["email"], entry, e["role"])
             for entry in parse.keys():
                 self.create_export(entry) 
+        elif func == "export":
+            options = "hc:"
+            long = "help", "crew="
+            crew = None
+            try:
+                a, _ = getopt.getopt(argv[3:], options, long)
+                for ca, cv in a:
+                    if cv in ("-h", "--help"):
+                        print(help)
+                    elif ca in ("-c", "--crew"):
+                        crew = cv
+            except getopt.error as err:
+                print(str(err))
+            result = self.get_crews(crew)
+            for entry in result:
+                self.create_export(entry["name"])
         
-        
+
         elif func == "all":
             options = "hc:"
             long = ["help", "crew"]
