@@ -26,7 +26,7 @@ class Utils:
         return var
 
     def idjango_post(self, path, json) -> requests.Response:
-        headers = {'Content-Type': 'application/json', "Authorization": "Bearer " + self.IDJANGO_API_KEY}
+        headers = {'Content-Type': 'application/json', "Authorization": "Api-Key " + self.IDJANGO_API_KEY}
         return requests.post(self.IDJANGO_API_URL + path, headers=headers, json=json)
 
     def connect_drops(self) -> pymysql.Connection:
