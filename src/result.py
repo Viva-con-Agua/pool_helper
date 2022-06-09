@@ -24,3 +24,10 @@ class Result:
         print("Errors: ")
         for entry in self.errors:
             print(entry)
+
+
+class DatabaseResult:
+
+    def __init__(self)-> None:
+        self.success = []
+        self.failed = []

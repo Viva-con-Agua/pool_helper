@@ -1,3 +1,4 @@
+from getopt import getopt
 import os, requests
 from typing import List
 from dotenv import load_dotenv
@@ -55,4 +56,10 @@ class Utils:
         for entry in p_list:
             print(entry)
 
-        
+
+    def get_options(self, options: str, long_option: str, argv: List[str]):
+        try:
+            a, _ = getopt(argv, options, long_option)
+            return a
+        except getopt.error as err:
+            print(str(err))
