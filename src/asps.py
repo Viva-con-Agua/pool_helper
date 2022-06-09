@@ -95,6 +95,15 @@ class Asps:
             result = cursor.fetchall()
             print(result)
     
+    def clean_roles(self):
+        sql_socialmedia = ('update Supporter_Crew set pillar = "socialmedia" where pillar = "social media"')
+        sql_additonal = ('update Supporter_Crew set pillar = "additonals" where pillar = "zusätzliche"')
+        sql_awareness = ('update Supporter_Crew set pillar = "awareness" where pillar = "Awareness"')
+        with self.drops.cursor() as cursor:
+            cursor.execute(sql_socialmedia)
+            cursor.execute(sql_additonal)
+            cursor.execute(sql_awareness)
+        self.drops.commit()
 
     def get_crews(self, crew=None) -> List:
         where = ""
@@ -324,6 +333,9 @@ class Asps:
             else:
                 print("error")
                 exit(1)
+        elif func == "clean":
+            self.clean_roles()
+
 
 
 
