@@ -20,12 +20,12 @@ class Newsletter:
         self.utils = Utils()
         self.pool1 = self.utils.connect_pool1()
 
-    def select_all(self, nl_type) -> List:
+    def select_all(self) -> List:
         sql = ( 'select user_email, meta_value from wp_users as u '
         'left join wp_usermeta as m on u.ID = m.user_id '
-        'where m.meta_key = "mail_switch" && m.meta_value = %s')
+        'where m.meta_key = "mail_switch" && m.meta_value != "none"')
         with self.pool1.cursor() as cursor:
-            cursor.execute(sql, nl_type)
+            cursor.execute(sql)
             sql_result = cursor.fetchall()
         result = []
         for entry in sql_result:
@@ -35,8 +35,8 @@ class Newsletter:
             result.append(n)
         return result
 
-    def export_all(self, nl_type):
-        data = self.select_all(nl_type)
+    def export_all(self):
+        data = self.select_all()
         result = Result()
         for i in tqdm (range(len(data)), desc="Export Newsletter to IDjango...", ncols=75):
             response = self.utils.idjango_post('/v1/pool/newsletter/', data[i])
@@ -47,7 +47,7 @@ class Newsletter:
         if len(argv) < 2:
             print("no param")
         if argv[2] == "select":
-            result = self.select_all(argv[3])
+            result = self.select_all()
             self.utils.print_list(result)
         elif argv[2] == "export":
-            self.export_all(argv[3])
+            self.export_all()
