@@ -9,7 +9,7 @@ class Profile(BaseModel):
     id: str
     gender: str
     phone: str
-    birthdate: int
+    birthdate: str
     user_id: str
     modified: Modified
 
@@ -33,9 +33,9 @@ class ProfileHandler:
         for x in sql_result:
             user_id = str(uuid.UUID(bytes=x['public_id']))
             modified=Modified(created=int(x['created']/1000), updated=int(x['updated']/1000))
-            birthdate = 0
+            birthdate = ""
             if x['birthday'] != None:
-                birthdate=int(x['birthday']/1000)
+                birthdate=str(int(x['birthday']/1000))
             result.append(
                 Profile(
                     id='',
@@ -55,6 +55,7 @@ class ProfileHandler:
             result.add(response)
         result.print()
 
+    
     def process(self, argv):
         if argv[2] == 'all':
             result = self.all()
