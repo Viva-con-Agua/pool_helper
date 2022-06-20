@@ -1,9 +1,13 @@
+from pydantic import BaseModel
 import pymysql, pymysql.cursors, os, copy, uuid
 from dotenv import load_dotenv
 import requests
 from tqdm import tqdm
+import pprint
 
-from .utils import Utils 
+from .result import Result
+
+from .utils import Utils , Modified
 
 userModel = {
 #    'id': '',
@@ -46,7 +50,16 @@ userModel = {
 #    'confirmed': '',
 }
 
-class User:
+class User(BaseModel):
+    id: str
+    email: str
+    first_name: str
+    last_name: str
+    display_name: str
+    drops_id: str
+    modified: Modified
+
+class UserHandler:
 
     def __init__(self) -> None:
         self.utils = Utils()
@@ -54,8 +67,44 @@ class User:
         self.api_key = os.getenv('GOOGLE_API_KEY')
         self.drops = self.utils.connect_drops()
         self.pool1 = self.utils.connect_pool1()
+
+
+    def all(self):
+        sql = ('select u.public_id, p.email, s.first_name, s.last_name, u.created, u.updated from User as u ' 
+            'left join Profile as p on u.id = p.user_id ' 
+            'left join Supporter as s on s.profile_id = p.id ' 
+            'where p.confirmed = 1')
+        with self.drops.cursor() as cursor:
+            cursor.execute(sql)
+            sql_result = cursor.fetchall()
+        result = []
+        for x in sql_result:
+            id = str(uuid.UUID(bytes=x['public_id']))
+            modified=Modified(created=int(x['created']/1000), updated=int(x['updated']/1000))
+            result.append(
+                User(
+                    id=id,
+                    email=x['email'].lower(),
+                    first_name=x['first_name'],
+                    last_name=x['last_name'],
+                    display_name="",
+                    drops_id=id,
+                    modified=modified
+                )
+            )
+        return result
     
-    def getUsers(self):
+    def export(self, list):
+        result = Result()
+        for i in tqdm (range(len(list)), desc="Export Users to IDjango...", ncols=75):
+            response = self.utils.idjango_post('/v1/pool/user/', list[i].dict())
+            result.add(response)
+        result.print()
+    
+    def getUsers(self, email=None):
+        where = ''
+        if email != None:
+            where = 'where p.email = "' + email +'"'
         sql = ( 'select u.public_id, p.email, s.first_name, s.last_name, sc.active, sc.nvm_date, c.publicId as crew_publicId, u.created, u.updated, sc.pillar, s.birthday, s.mobile_phone, s.sex, '
                 'sc.updated as crew_updated, sc.created as crew_created, a.country, a.street, a.zip, a.city, a.additional '
                 'from User as u ' 
@@ -63,7 +112,7 @@ class User:
                 'left join Supporter as s on s.profile_id = p.id '
                 'left join Address as a on a.supporter_id = s.id '
                 'left join Supporter_Crew as sc on sc.supporter_id = s.id '
-                'left join Crew as c on sc.crew_id = c.id '
+                'left join Crew as c on sc.crew_id = c.id '  + where
                 )
         with self.drops.cursor() as cursor:
             cursor.execute(sql)
@@ -299,8 +348,16 @@ class User:
             self.confirm(argv[3])
             self.get(argv[3])
         if argv[2] == "get":
-            self.get(argv[3])
+            result = self.getUsers(argv[3])
+            for i in result:
+                pprint.pprint(i)
         if argv[2] == "delete":
             self.delete(argv[3])
+        if argv[2] == 'all':
+            result = self.all()
+            print(result)
+        if argv[2] == 'export':
+            result = self.all()
+            self.export(result)
 
 

@@ -4,6 +4,7 @@ from uuid import UUID
 import pymysql, pymysql.cursors, os, getopt, sys, csv
 from pymysql import connections
 from dotenv import load_dotenv
+import pprint
 import time
 import datetime
 from pydantic import BaseModel

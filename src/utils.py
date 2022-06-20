@@ -1,8 +1,14 @@
 from getopt import getopt
 import os, requests
+from pydantic import BaseModel
 from typing import List
 from dotenv import load_dotenv
 import pymysql
+
+
+class Modified(BaseModel):
+    created: int
+    updated: int
 
 class Utils:
 
