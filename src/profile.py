@@ -48,7 +48,7 @@ class ProfileHandler:
             )
         return result
 
-    def export(self, list: list[Profile]):
+    def export(self, list):
         result = Result()
         for i in tqdm (range(len(list)), desc="Export Profile to IDjango...", ncols=75):
             response = self.utils.idjango_post('/v1/pool/profile/', list[i].dict())

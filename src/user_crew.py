@@ -39,7 +39,7 @@ class UserCrewHandler:
             )
         return result
 
-    def export(self, list: list[UserCrew]):
+    def export(self, list):
         result = Result()
         for i in tqdm (range(len(list)), desc="Export UserCrew to IDjango...", ncols=75):
             response = self.utils.idjango_post('/v1/pool/crew/', list[i].dict())
