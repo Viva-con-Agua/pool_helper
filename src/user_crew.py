@@ -39,6 +39,18 @@ class UserCrewHandler:
             )
         return result
 
+    def fix(self):
+        sql = ('select distinct(sc1.supporter_id) '
+               'from Supporter_Crew as sc1 '
+               'WHERE sc1.active = "active" '
+               'AND exists (SELECT 1 FROM Supporter_Crew as sc2 WHERE sc2.supporter_id = sc1.supporter_id and sc2.active IS NULL)')
+        with self.drops.cursor() as cursor:
+            cursor.execute(sql)
+            sql_result = cursor.fetchall()
+
+        result = ('update Supporter_Crew set active="active" where supporter_id in (%s) ' % ', '.join(_[0] for _ in sql_result))
+        return result
+
     def export(self, list):
         result = Result()
         for i in tqdm (range(len(list)), desc="Export UserCrew to IDjango...", ncols=75):
@@ -52,4 +64,7 @@ class UserCrewHandler:
             print(result)
         if argv[2] == 'export':
             result = self.all()
-            self.export(result)   
+            self.export(result)
+        if argv[2] == 'fix':
+            result = self.fix()
+            print(result)
