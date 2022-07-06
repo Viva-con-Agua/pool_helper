@@ -49,10 +49,10 @@ class UserCrewHandler:
             sql_result = cursor.fetchall()
 
         sql = "update Supporter_Crew set active='active' where supporter_id in (%s) " % (', '.join(str(_['supporter_id']) for _ in sql_result))
-        #with self.drops.cursor() as cursor:
-        #    cursor.execute(sql)
-        #self.drops.commit()
-        return sql
+        with self.drops.cursor() as cursor:
+            cursor.execute(sql)
+        self.drops.commit()
+        return ', '.join(str(_['supporter_id']) for _ in sql_result)
 
     def fix_nvm(self):
         sql = ('select DISTINCT(sc1.supporter_id), sc1.nvm_date '
