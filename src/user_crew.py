@@ -52,7 +52,7 @@ class UserCrewHandler:
         with self.drops.cursor() as cursor:
             cursor.execute(result, ', '.join(str(_['supporter_id']) for _ in sql_result))
         self.drops.commit()
-        return result
+        return ', '.join(str(_['supporter_id']) for _ in sql_result)
 
     def fix_nvm(self):
         sql = ('select DISTINCT(sc1.supporter_id), sc1.nvm_date '
@@ -65,10 +65,11 @@ class UserCrewHandler:
 
         for x in sql_result:
             sql = "update Supporter_Crew set nvm_date = %i where supporter_id = %i" % (x['nvm_date'], x['supporter_id'])
-            #with self.drops.cursor() as cursor:
-            #    cursor.execute(sql, x['nvm_date'], x['supporter_id'])
-            #self.drops.commit()
-            print(sql)
+            with self.drops.cursor() as cursor:
+                cursor.execute(sql)
+            self.drops.commit()
+
+        return ', '.join(str(_['supporter_id']) for _ in sql_result)
 
     def export(self, list):
         result = Result()
@@ -84,8 +85,9 @@ class UserCrewHandler:
         if argv[2] == 'export':
             result = self.all()
             self.export(result)
-        if argv[2] == 'fix':
-            #result = self.fix_active()
-            #print(result)
+        if argv[2] == 'fix_active':
+            result = self.fix_active()
+            print(result)
+        if argv[2] == 'fix_nvm':
             result = self.fix_nvm()
             print(result)
