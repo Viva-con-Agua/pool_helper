@@ -48,7 +48,7 @@ class UserCrewHandler:
             cursor.execute(sql)
             sql_result = cursor.fetchall()
 
-        result = ('update Supporter_Crew set active="active" where supporter_id in (%s) ' % ', '.join(_[0] for _ in sql_result))
+        result = ('update Supporter_Crew set active="active" where supporter_id in (%s) ' % ', '.join(str(_['supporter_id']) for _ in sql_result))
         return result
 
     def export(self, list):
