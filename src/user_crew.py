@@ -64,7 +64,7 @@ class UserCrewHandler:
             sql_result = cursor.fetchall()
 
         for x in sql_result:
-            sql = "update Supporter_Crew set nvm_date = %i where supporter_id = %i" % x['nvm_date'], x['supporter_id']
+            sql = "update Supporter_Crew set nvm_date = %i where supporter_id = %i" % (x['nvm_date'], x['supporter_id'])
             #with self.drops.cursor() as cursor:
             #    cursor.execute(sql, x['nvm_date'], x['supporter_id'])
             #self.drops.commit()
