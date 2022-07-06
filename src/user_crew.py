@@ -39,7 +39,7 @@ class UserCrewHandler:
             )
         return result
 
-    def fix(self):
+    def fix_active(self):
         sql = ('select distinct(sc1.supporter_id) '
                'from Supporter_Crew as sc1 '
                'WHERE sc1.active = "active" '
@@ -48,8 +48,27 @@ class UserCrewHandler:
             cursor.execute(sql)
             sql_result = cursor.fetchall()
 
-        result = ('update Supporter_Crew set active="active" where supporter_id in (%s) ' % ', '.join(str(_['supporter_id']) for _ in sql_result))
+        result = ('update Supporter_Crew set active="active" where supporter_id in (%s) ')
+        with self.drops.cursor() as cursor:
+            cursor.execute(result, ', '.join(str(_['supporter_id']) for _ in sql_result))
+        self.drops.commit()
         return result
+
+    def fix_nvm(self):
+        sql = ('select DISTINCT(sc1.supporter_id), sc1.nvm_date '
+               'from Supporter_Crew as sc1 '
+               'where sc1.nvm_date IS NOT NULL '
+               'AND exists (SELECT 1 FROM Supporter_Crew as sc2 WHERE sc2.supporter_id = sc1.supporter_id and sc2.nvm_date IS NULL)')
+        with self.drops.cursor() as cursor:
+            cursor.execute(sql)
+            sql_result = cursor.fetchall()
+
+        for x in sql_result:
+            sql = "update Supporter_Crew set nvm_date = %i where supporter_id = %i" % x['nvm_date'], x['supporter_id']
+            #with self.drops.cursor() as cursor:
+            #    cursor.execute(sql, x['nvm_date'], x['supporter_id'])
+            #self.drops.commit()
+            print(sql)
 
     def export(self, list):
         result = Result()
@@ -66,5 +85,7 @@ class UserCrewHandler:
             result = self.all()
             self.export(result)
         if argv[2] == 'fix':
-            result = self.fix()
+            #result = self.fix_active()
+            #print(result)
+            result = self.fix_nvm()
             print(result)
