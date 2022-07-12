@@ -27,7 +27,7 @@ class NewsletterHandler:
 
         where = ' where p.confirmed = 1'
         if timestamp != None:
-            where = ' and u.created > ' + timestamp
+            where += ' and u.created > ' + timestamp
 
         sql_user = ('select email from Profile as p'
             ' left join User as u on u.id = p.user_id' + where )
