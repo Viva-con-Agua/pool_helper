@@ -25,11 +25,11 @@ class NewsletterHandler:
 
     def all(self, timestamp=None) -> List:
 
-        where = ''
+        where = ' where confirmed = 1'
         if timestamp != None:
             where = ' and u.created > ' + timestamp
 
-        sql_user = ('select email from Profile where confirmed = 1'
+        sql_user = ('select email from Profile'
             ' left join User as u on u.id = p.user_id' + where )
         with self.drops.cursor() as cursor:
             cursor.execute(sql_user)
