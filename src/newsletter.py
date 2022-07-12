@@ -66,5 +66,5 @@ class NewsletterHandler:
             result = self.all()
             self.utils.print_list(result)
         elif argv[2] == "export":
-            result = self.all()
+            result = self.all(argv[3])
             self.export(result)
