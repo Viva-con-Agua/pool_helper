@@ -23,8 +23,14 @@ class NewsletterHandler:
         self.pool1 = self.utils.connect_pool1()
         self.drops = self.utils.connect_drops()
 
-    def all(self) -> List:
-        sql_user = ("select email from Profile where confirmed = 1")
+    def all(self, timestamp=None) -> List:
+
+        where = ''
+        if timestamp != None:
+            where = ' and u.created > ' + timestamp
+
+        sql_user = ('select email from Profile where confirmed = 1'
+            'left join User as u on u.id = p.user_id' + where )
         with self.drops.cursor() as cursor:
             cursor.execute(sql_user)
             sql_user_result = cursor.fetchall()
