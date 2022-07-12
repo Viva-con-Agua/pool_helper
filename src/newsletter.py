@@ -29,7 +29,7 @@ class NewsletterHandler:
         if timestamp != None:
             where = ' and u.created > ' + timestamp
 
-        sql_user = ('select email from Profile'
+        sql_user = ('select email from Profile as p'
             ' left join User as u on u.id = p.user_id' + where )
         with self.drops.cursor() as cursor:
             cursor.execute(sql_user)
