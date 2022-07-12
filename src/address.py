@@ -135,7 +135,7 @@ class AddressHandler:
             for i in result:
                 print(i)
         elif func == "export":
-            result = self.all()
+            result = self.all(argv[3])
             self.export(result)
 
     
