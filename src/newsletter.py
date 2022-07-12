@@ -31,6 +31,8 @@ class NewsletterHandler:
 
         sql_user = ('select email from Profile as p'
             ' left join User as u on u.id = p.user_id' + where )
+
+        print(sql_user)
         with self.drops.cursor() as cursor:
             cursor.execute(sql_user)
             sql_user_result = cursor.fetchall()
