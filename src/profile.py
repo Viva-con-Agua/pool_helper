@@ -20,12 +20,18 @@ class ProfileHandler:
         self.drops = self.utils.connect_drops()
 
     
-    def all(self):
+
+    def all(self, timestamp=None):
+
+        where = ''
+        if timestamp != None:
+            where = ' and u.created > ' + timestamp
+
         sql = ('select s.sex, s.mobile_phone, s.birthday, u.public_id, u.created, u.updated '
                 'from User as u '
                 'left join Profile as p on u.id = p.user_id ' 
                 'left join Supporter as s on p.id = s.profile_id '
-                'where p.confirmed = 1')
+                'where p.confirmed = 1' + where)
         with self.drops.cursor() as cursor:
             cursor.execute(sql)
             sql_result = cursor.fetchall()
