@@ -31,11 +31,16 @@ class AddressHandler:
         self.url_place = "https://maps.googleapis.com/maps/api/place/details/json?"    
         self.api_key = os.getenv('GOOGLE_API_KEY')
 
-    def all(self):
+    def all(self, timestamp=None):
+
+        where = ''
+        if timestamp != None:
+            where = ' where u.created > ' + timestamp
+
         sql = ('select * from Address as a '
         'left join Supporter as s on a.supporter_id = s.id '
         'left join Profile as p on s.profile_id = p.id '
-        'left join User as u on u.id = p.user_id')
+        'left join User as u on u.id = p.user_id' + where)
         with self.drops.cursor() as cursor:
             cursor.execute(sql)
             sql_result = cursor.fetchall()
@@ -130,7 +135,7 @@ class AddressHandler:
             for i in result:
                 print(i)
         elif func == "export":
-            result = self.all()
+            result = self.all(argv[3])
             self.export(result)
 
     

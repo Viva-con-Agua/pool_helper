@@ -14,14 +14,19 @@ class UserCrewHandler:
         self.utils = Utils()
         self.drops = self.utils.connect_drops()
 
-    def all(self):
+    def all(self, timestamp=None):
+
+        where = ''
+        if timestamp != None:
+            where = ' and u.created > ' + timestamp
+
         sql = ('select distinct c.publicId, u.public_id ' 
             'from  User as u ' 
             'left join Profile as p on p.user_id = u.id '
             'left join Supporter as s on s.profile_id = p.id '
             'left join Supporter_Crew as sc on sc.supporter_id = s.id '
             'left join Crew as c on c.id = sc.crew_id '
-            'where p.confirmed = 1')
+            'where p.confirmed = 1' + where)
         with self.drops.cursor() as cursor:
             cursor.execute(sql)
             sql_result = cursor.fetchall()
@@ -83,7 +88,7 @@ class UserCrewHandler:
             result = self.all()
             print(result)
         if argv[2] == 'export':
-            result = self.all()
+            result = self.all(argv[3])
             self.export(result)
         if argv[2] == 'fix_active':
             result = self.fix_active()

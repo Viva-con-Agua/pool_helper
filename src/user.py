@@ -69,11 +69,16 @@ class UserHandler:
         self.pool1 = self.utils.connect_pool1()
 
 
-    def all(self):
+    def all(self, timestamp=None):
+
+        where = ''
+        if timestamp != None:
+            where = ' and u.created > ' + timestamp
+
         sql = ('select u.public_id, p.email, s.first_name, s.last_name, u.created, u.updated from User as u ' 
             'left join Profile as p on u.id = p.user_id ' 
             'left join Supporter as s on s.profile_id = p.id ' 
-            'where p.confirmed = 1')
+            'where p.confirmed = 1' + where)
         with self.drops.cursor() as cursor:
             cursor.execute(sql)
             sql_result = cursor.fetchall()
@@ -334,11 +339,8 @@ class UserHandler:
         with self.pool1.cursor() as cursor:
             cursor.execute(user_del)
         self.pool1.commit()
-        
-        
 
 
-    
     def process(self, argv):
         if len(argv) < 2:
             print("no param")
@@ -357,7 +359,7 @@ class UserHandler:
             result = self.all()
             print(result)
         if argv[2] == 'export':
-            result = self.all()
+            result = self.all(argv[3])
             self.export(result)
 
 
