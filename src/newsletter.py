@@ -25,7 +25,7 @@ class NewsletterHandler:
 
     def all(self, timestamp=None) -> List:
 
-        where = ' where confirmed = 1'
+        where = ' where p.confirmed = 1'
         if timestamp != None:
             where = ' and u.created > ' + timestamp
 
