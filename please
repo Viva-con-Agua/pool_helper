@@ -1,3 +1,17 @@
 #!/bin/bash
+full_path=$(realpath $0)
+dir_path=$(dirname $full_path)
 
-python main.py "${@:1}"
+python_version=python3.7
+source ${dir_path}/.env
+
+install() {
+    python3 -m venv lib
+    source lib/bin/activate
+    pip install -r requirements.txt
+}
+
+case $1 in
+    install) install;;
+    *) source ${dir_path}/.venv/bin/activate && $python_version ${dir_path}/main.py "${@:1}"
+esac
