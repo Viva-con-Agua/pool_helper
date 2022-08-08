@@ -321,6 +321,7 @@ class UserHandler:
             if not bcrypt.checkpw(password_bytes, result["password"].encode("utf-8")):
                 print("Error: password not matching with database. Try again." )
         print("Password is: ", password)
+
     def delete(self, email):
         sql = "select p.id as p_id, u.id as u_id, s.id as s_id from User as u left join Profile as p on p.user_id = u.id left join Supporter as s on s.profile_id = p.id where email = %s"
         u_id = 0
