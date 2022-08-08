@@ -1,3 +1,4 @@
 .env*
 lib
 .venv
+src/__pycache__/
