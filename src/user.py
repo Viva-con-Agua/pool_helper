@@ -1,9 +1,11 @@
+from sqlite3 import Cursor
 from pydantic import BaseModel
 import pymysql, pymysql.cursors, os, copy, uuid
 from dotenv import load_dotenv
 import requests
 from tqdm import tqdm
 import pprint
+import random, bcrypt
 
 from .result import Result
 
@@ -300,7 +302,26 @@ class UserHandler:
             cursor.execute(sql, email)
             database_result = cursor.fetchone()
             print(database_result)
-    
+
+    def change_password(self, email):
+        password = ''
+        for _ in range(20):
+            random_integer = random.randint(33, 122)
+            password += (chr(random_integer))
+        password_bytes = bytes(password, 'utf8')
+        password_hashed = bcrypt.hashpw(password_bytes, bcrypt.gensalt(10))
+        sql_update='update PasswordInfo as pi left join Profile as p on p.id = pi.profile_id set password = "' + password_hashed.decode() +'" where p.email = %s'
+        with self.drops.cursor() as cursor:
+            cursor.execute(sql_update, email)
+            result = cursor.fetchone()
+        sql = 'select * from Profile as p left join PasswordInfo as pi on pi.profile_id = p.id where email = %s'
+        with self.drops.cursor() as cursor:
+            cursor.execute(sql, email)
+            result = cursor.fetchone()
+            if not bcrypt.checkpw(password_bytes, result["password"].encode("utf-8")):
+                print("Error: password not matching with database. Try again." )
+        print("Password is: ", password)
+
     def delete(self, email):
         sql = "select p.id as p_id, u.id as u_id, s.id as s_id from User as u left join Profile as p on p.user_id = u.id left join Supporter as s on s.profile_id = p.id where email = %s"
         u_id = 0
@@ -361,5 +382,7 @@ class UserHandler:
         if argv[2] == 'export':
             result = self.all(argv[3])
             self.export(result)
+        if argv[2] == 'change_password':
+            self.change_password(argv[3])
 
 
