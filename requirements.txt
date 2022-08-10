@@ -15,9 +15,5 @@ python-dotenv==0.20.0
 requests==2.27.1
 tqdm==4.64.0
 urllib3==1.26.9
-<<<<<<< HEAD
-pydantic==1.9.1
-=======
 pydantic
 bcrypt
->>>>>>> 1aca7af (changes)
