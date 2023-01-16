@@ -1,7 +1,7 @@
 certifi==2021.10.8
 cffi==1.15.0
 charset-normalizer==2.0.12
-cryptography==37.0.1
+cryptography
 greenlet==1.1.2
 idna==3.3
 jedi==0.18.1
@@ -17,3 +17,5 @@ tqdm==4.64.0
 urllib3==1.26.9
 pydantic
 bcrypt
+pandas
+xlwt

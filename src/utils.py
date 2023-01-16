@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import List
 from dotenv import load_dotenv
 import pymysql
+from datetime import datetime
 
 
 class Modified(BaseModel):
@@ -50,13 +51,25 @@ class Utils:
         return pymysql.connect(
                 host=self.get_env_string('POOL1_HOST'),
                 port=self.get_env_int('POOL1_PORT', 3306),
-                user=self.get_env_string('POOL1_USER'),
+                user=self.get_env_string('POOL1_USER', "root"),
                 password=self.get_env_string('POOL1_PASSWORD', "root"),
                 database="db175370026",
                 cursorclass=pymysql.cursors.DictCursor
                 )
-
     
+    def connect_stream(self) -> pymysql.Connection:
+        return pymysql.connect(
+                host=self.get_env_string('STREAM_HOST', "172.4.8.3"),
+                port=self.get_env_int('STREAM_PORT', 3306),
+                user=self.get_env_string('STREAM_USER', "stream"),
+                password=self.get_env_string('STREAM_PASSWORD', "stream"),
+                database="stream",
+                cursorclass=pymysql.cursors.DictCursor
+            )
+
+    def today(self):
+        today = datetime.now()
+        return today.strftime('%Y-%m-%d')
 
     def print_list(self, p_list):
         for entry in p_list:
