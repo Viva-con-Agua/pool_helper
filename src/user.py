@@ -72,6 +72,26 @@ class UserHandler:
         self.drops = self.utils.connect_drops()
         self.pool1 = self.utils.connect_pool1()
 
+    
+    def add_role(self, email, role):
+        sql_select = 'select u.roles from User as u left join Profile as p on p.user_id = u.id where p.email = %s'
+        with self.drops.cursor() as cursor:
+            cursor.execute(sql_select, email)
+            sql_result = cursor.fetchone()
+        roles = sql_result["roles"]
+        if not roles.__contains__(role):
+            roles+= "," + role
+            sql_update = "update User as u left join Profile as p on p.user_id = u.id set u.roles = %s where email = %s"
+            with self.drops.cursor() as cursor:
+                cursor.execute(sql_update, (roles, email))
+        self.drops.commit()
+        sql_select = 'select * from User as u left join Profile as p on p.user_id = u.id where p.email = %s'
+        with self.drops.cursor() as cursor:
+            cursor.execute(sql_select, email)
+            sql_result = cursor.fetchone()
+        print(sql_result)
+
+
 
     def all(self, timestamp=None):
 
@@ -408,5 +428,7 @@ class UserHandler:
             self.change_password(argv[3])
         if argv[2] == 'reset_mail':
             self.reset_mail(argv[3])
+        if argv[2] == 'role':
+            self.add_role(argv[3], argv[4])
 
 
