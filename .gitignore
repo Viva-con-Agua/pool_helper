@@ -2,3 +2,5 @@
 lib
 .venv
 src/__pycache__/
+*.csv
+*.xts

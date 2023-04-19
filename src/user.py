@@ -1,4 +1,5 @@
-from sqlite3 import Cursor
+from datetime import datetime
+#from sqlite3 import Cursor
 from pydantic import BaseModel
 import pymysql, pymysql.cursors, os, copy, uuid
 from dotenv import load_dotenv
@@ -6,6 +7,7 @@ import requests
 from tqdm import tqdm
 import pprint
 import random, bcrypt
+import time
 
 from .result import Result
 
@@ -69,6 +71,26 @@ class UserHandler:
         self.api_key = os.getenv('GOOGLE_API_KEY')
         self.drops = self.utils.connect_drops()
         self.pool1 = self.utils.connect_pool1()
+
+    
+    def add_role(self, email, role):
+        sql_select = 'select u.roles from User as u left join Profile as p on p.user_id = u.id where p.email = %s'
+        with self.drops.cursor() as cursor:
+            cursor.execute(sql_select, email)
+            sql_result = cursor.fetchone()
+        roles = sql_result["roles"]
+        if not roles.__contains__(role):
+            roles+= "," + role
+            sql_update = "update User as u left join Profile as p on p.user_id = u.id set u.roles = %s where email = %s"
+            with self.drops.cursor() as cursor:
+                cursor.execute(sql_update, (roles, email))
+        self.drops.commit()
+        sql_select = 'select * from User as u left join Profile as p on p.user_id = u.id where p.email = %s'
+        with self.drops.cursor() as cursor:
+            cursor.execute(sql_select, email)
+            sql_result = cursor.fetchone()
+        print(sql_result)
+
 
 
     def all(self, timestamp=None):
@@ -322,6 +344,26 @@ class UserHandler:
                 print("Error: password not matching with database. Try again." )
         print("Password is: ", password)
 
+    def reset_mail(self, email):
+        sql = 'select u.id as user_id from User as u left join Profile as p on u.id = p.user_id where email = %s'
+        with self.drops.cursor() as cursor:
+            cursor.execute(sql, email)
+            result = cursor.fetchone()
+        user_id = result["user_id"]
+        print(user_id)
+        sql_insert = (
+            'insert into UserToken '
+            '(`id`, `user_id`,`email`, `expiration_time`, `is_sign_up`) '
+            'VALUE (%s, %s, %s, %s, %s)'
+        )
+        expiration_time= time.time_ns() + (604800 *1000)
+        u_id = uuid.uuid4()
+        with self.drops.cursor() as cursor:
+            cursor.execute(sql_insert, (u_id.bytes, user_id, email, expiration_time, False))
+            result = cursor.fetchone()
+        print('https://pool2.vivaconagua.org/drops/webapp/reset/'+ str(u_id))
+        self.drops.commit()
+
     def delete(self, email):
         sql = "select p.id as p_id, u.id as u_id, s.id as s_id from User as u left join Profile as p on p.user_id = u.id left join Supporter as s on s.profile_id = p.id where email = %s"
         u_id = 0
@@ -384,5 +426,9 @@ class UserHandler:
             self.export(result)
         if argv[2] == 'change_password':
             self.change_password(argv[3])
+        if argv[2] == 'reset_mail':
+            self.reset_mail(argv[3])
+        if argv[2] == 'role':
+            self.add_role(argv[3], argv[4])
 
 

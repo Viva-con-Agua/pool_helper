@@ -8,6 +8,8 @@ from src.asps import Asps
 from src.crews import Crews
 from src.user import UserHandler
 from src.user_crew import UserCrewHandler
+from src.finance import FinanceHandler
+
 def help_asp():
     print("Commands for asp: all, get")
     print("  all")
@@ -43,6 +45,10 @@ def main(argv):
     elif argv[1] == "user_crew":
         prog = UserCrewHandler()
         prog.process(argv)
+    elif argv[1] == "fin":
+        prog = FinanceHandler()
+        prog.process(argv)
+
 
 
 
